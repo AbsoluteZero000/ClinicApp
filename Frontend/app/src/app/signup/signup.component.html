@@ -1,0 +1,48 @@
+<div mat-dialog-title>
+    <h1>Signup Form</h1>
+</div>
+<form [formGroup]="signupForm" style="padding: 0px 25px 5px;" (ngSubmit)="onFormSubmit()">
+
+    <div mat-dialog-content class="content">
+        <div class="row">
+            <p>
+                <mat-form-field appearance="fill">
+                    <mat-label>UserName</mat-label>
+                    <input matInput placeholder="AbsoluteZero" formControlName="name" required>
+                    <mat-icon matSuffix>sentiment_very_satisfied</mat-icon>
+                </mat-form-field>
+            </p>
+        </div>
+        <div class="row">
+            <mat-form-field>
+                <mat-label>Email</mat-label>
+                <input matInput type="email" placeholder="Ex. test@gmail.com" formControlName="email">
+            </mat-form-field>
+        </div>
+        <div class="row">
+            <mat-form-field>
+                <mat-label>Enter your password</mat-label>
+                <input matInput [type]="hide ? 'password' : 'text'" required formControlName="password">
+                <button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'"
+                    [attr.aria-pressed]="hide">
+                    <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+                </button>
+            </mat-form-field>
+        </div>
+        <div class="row">
+            <div>
+                <mat-radio-group aria-label="Select an option" formControlName="role">
+                    <mat-label><b>Position: </b></mat-label>
+                    <mat-radio-button value="doctor">Doctor</mat-radio-button>
+                    <mat-radio-button value="patient">Patient</mat-radio-button>
+                </mat-radio-group>
+            </div>
+        </div>
+    </div>
+
+    <div mat-dialog-actions class="action">
+        <button mat-raised-button>Cancel</button>
+        <button mat-raised-button color="primary" type="submit" >Submit</button>
+    </div>
+
+</form>
