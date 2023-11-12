@@ -1,13 +1,22 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, takeUntil } from 'rxjs';
 import { AuthService } from './auth.service';
+import { Router } from '@angular/router';
+import { SharedService } from '../shared.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UsersService {
-  constructor(private _http: HttpClient, private authService: AuthService) {}
+
+  constructor(
+    private _http: HttpClient,
+    private authService: AuthService,
+    private router: Router,
+    private sharedService: SharedService
+  ) {}
+
   Signup(data: any): Observable<any> {
     let body = new FormData();
     body.append('name', data.name);
@@ -24,29 +33,34 @@ export class UsersService {
     });
     console.log(base64Credentials);
 
-
     this._http
       .post('http://localhost:8080/login', {}, { headers, observe: 'response' })
-      .subscribe((response) => {
-        const setCookieHeader = response.headers.get('Set-Cookie');
-        console.log(setCookieHeader)
-        const sessionCookieValue =
-          this.extractSessionCookieValue(setCookieHeader);
-          if (sessionCookieValue !== null) {
-            this.authService.setAuthentication(sessionCookieValue);
-          } else {
-            console.error('Session cookie value is null.');
+      .subscribe({
+        next: (res) => {
+          const response = res.body as {
+            status: number;
+            message: string;
+            Data?: any;
+          };
+          console.log('Login success:', res);
+          if (response.Data.role == 'patient') {
+            this.sharedService.isDoctor = false;
+            this.sharedService.isPatient = true;
           }
-      });
-  }
-  private extractSessionCookieValue(
-    setCookieHeader: string | null
-  ): string | null {
-    if (!setCookieHeader) {
-      return null;
-    }
+          else if (response.Data.role == 'doctor') {
+            this.sharedService.isDoctor = true;
+            this.sharedService.isPatient = false;
+          }
+          else{
+            this.sharedService.isDoctor = true;
+            this.sharedService.isPatient = true;
 
-    const matches = setCookieHeader.match(/Session=([^;]+)/);
-    return matches ? matches[1] : null;
+          }
+
+          this.authService.setAuthentication(base64Credentials);
+          this.sharedService.isLoggedIn = true;
+        },
+        error: console.log,
+      });
   }
 }

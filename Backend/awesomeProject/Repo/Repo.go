@@ -63,6 +63,9 @@ func GetDoctorSlots(id string, db *sql.DB) (*sql.Rows, error) {
 	return db.Query("select id, date from Slot where doctorid=?", id)
 
 }
+func GetFreeDoctorSlots(db *sql.DB) (*sql.Rows, error) {
+	return db.Query("SELECT s.id AS slot_id, u.name AS doctor_name, s.date FROM slot s JOIN user u ON s.doctorid = u.id LEFT JOIN SlotWithPatient sp ON s.id = sp.slotid WHERE sp.id IS NULL;")
+}
 
 func GetPatientSlots(id string, db *sql.DB) (*sql.Rows, error) {
 	return db.Query("SELECT slotwithpatient.id, user.name, Slot.date  FROM user  JOIN SlotWithPatient ON user.id = SlotWithPatient.patientid  JOIN Slot ON SlotWithPatient.slotid = Slot.id WHERE user.id = ?;", id)

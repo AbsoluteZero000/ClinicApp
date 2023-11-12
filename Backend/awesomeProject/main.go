@@ -37,7 +37,7 @@ func main() {
 	router.POST("/addslot", Controller.AddDoctorSlot)
 	router.PUT("/editdoctorslot", Controller.EditDoctorSlot)
 	router.GET("/getdoctorslots", Controller.GetDoctorSlots)
-
+	router.GET("/getfreeslots", Controller.GetFreeDoctorSlot)
 	router.DELETE("/deleteslot", Controller.DeleteSlot)
 
 	router.Run(":8080")

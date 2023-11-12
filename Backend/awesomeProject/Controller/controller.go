@@ -162,13 +162,47 @@ func Login(c *gin.Context) {
 	})
 }
 
+func GetFreeDoctorSlot(c *gin.Context) {
+	BasicAuth(c)
+	var slot Model.GetListPatientResponse
+	var arrSlot []Model.GetListPatientResponse
+
+	db := Config.Connect()
+	defer db.Close()
+
+	rows, err := Repo.GetFreeDoctorSlots(db)
+
+	if err != nil {
+		log.Print(err)
+	}
+
+	for rows.Next() {
+		err = rows.Scan(&slot.Id, &slot.DoctorName, &slot.Date)
+		if err != nil {
+			log.Fatal(err.Error())
+		} else {
+			arrSlot = append(arrSlot, slot)
+		}
+	}
+
+	fmt.Println(arrSlot)
+	c.JSON(200, gin.H{
+		"Message": "Got Data Successfully",
+		"Data":    arrSlot,
+	})
+
+}
 func AddDoctorSlot(c *gin.Context) {
 	BasicAuth(c)
 	db := Config.Connect()
 	defer db.Close()
 
+	user, _, _ := c.Request.BasicAuth()
 	var slot Model.Slot
 	c.Bind(&slot)
+
+	u, _ := Repo.GetUserbyUserName(user, db)
+	slot.DoctorId = u.Id
 
 	_, err := Repo.InsertSlot(slot, db)
 	if err != nil {
@@ -229,6 +263,9 @@ func AddPatientSlot(c *gin.Context) {
 	db := Config.Connect()
 	defer db.Close()
 
+	user, _, _ := c.Request.BasicAuth()
+	u, _ := Repo.GetUserbyUserName(user, db)
+
 	var slot Model.SlotWithPatient
 
 	if err := c.Bind(&slot); err != nil {
@@ -238,6 +275,7 @@ func AddPatientSlot(c *gin.Context) {
 		})
 		return
 	}
+	slot.PatientId = u.Id
 
 	fmt.Println(slot)
 
@@ -305,7 +343,7 @@ func DeleteSlot(c *gin.Context) {
 	}
 	id := c.Query("id")
 
-	if authenticatedUser.Role == "patient" || authenticatedUser.Role == "admin" {
+	if authenticatedUser.Role == "patient" {
 		_, err = Repo.DeletePatientSlot(id, db)
 	} else {
 		_, err = Repo.DeleteDoctorSlot(id, db)

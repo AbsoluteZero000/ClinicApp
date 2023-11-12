@@ -3,12 +3,23 @@
   <mat-toolbar color="primary">
     <span>My App</span>
     <span class="example-spacer"></span>
-    <button mat-raised-button (click)="openSignupForm()" >
+    <button  *ngIf="!sharedService.isLoggedIn" mat-raised-button (click)="openSignupForm()" >
       Signup
     </button>
     <span>&nbsp;</span>
-    <button mat-raised-button (click)="openLoginForm()">
+    <button  *ngIf="!sharedService.isLoggedIn" mat-raised-button (click)="openLoginForm()">
       Login
     </button>
+    <button  *ngIf="sharedService.isLoggedIn" mat-raised-button (click)="signout()">
+      Signout
+    </button><span>&nbsp;</span>
+    <button  *ngIf="sharedService.isLoggedIn" mat-raised-button (click)="getSlots()">
+      Render
+    </button>
+
   </mat-toolbar>
 </p>
+
+<app-doctor *ngIf="sharedService.isDoctor"></app-doctor>
+
+<app-patient *ngIf="sharedService.isPatient"></app-patient>
