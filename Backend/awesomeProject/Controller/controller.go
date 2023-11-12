@@ -4,15 +4,11 @@ import (
 	"awesomeProject/Config"
 	"awesomeProject/Model"
 	"awesomeProject/Repo"
-	"encoding/json"
 	"fmt"
-	"github.com/gorilla/securecookie"
-	"github.com/gorilla/sessions"
-	"log"
+	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
-
-var Store = sessions.NewCookieStore(securecookie.GenerateRandomKey(10))
 
 func InitialData() {
 	Repo.InsertUser(Model.User{
@@ -48,9 +44,9 @@ func InitialData() {
 	}, Config.Connect())
 
 }
-func GetAllUsers(w http.ResponseWriter, r *http.Request) {
+func GetAllUsers(c *gin.Context) {
+	BasicAuth(c)
 	var User Model.User
-	var response Model.Response
 	var arrUser []Model.UserWithoutPassword
 
 	db := Config.Connect()
@@ -71,118 +67,44 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response.Status = 200
-	response.Message = "Success"
-	response.Data = arrUser
+	c.JSON(200, gin.H{
+		"Message": "Success",
+		"Data":    arrUser,
+	})
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(response)
 }
 
 // SignUp = Insert User API
-func SignUp(w http.ResponseWriter, r *http.Request) {
-	var response Model.Response
+func SignUp(c *gin.Context) {
 
 	db := Config.Connect()
 	defer db.Close()
 
-	err := r.ParseMultipartForm(4096)
-
-	if err != nil {
-		panic(err)
-	}
-
 	var user Model.User
-	user.Name = r.FormValue("name")
-	user.Email = r.FormValue("email")
-	user.Password = r.FormValue("password")
-	user.Role = r.FormValue("role")
 
-	_, err = Repo.InsertUser(user, db)
+	c.Bind(user)
+	_, err := Repo.InsertUser(user, db)
 
 	if err != nil {
 		log.Print(err)
-		response.Status = 409
-		response.Message = "Failed to insert data duplicate Email or Name"
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		json.NewEncoder(w).Encode(response)
+		c.JSON(409, gin.H{
+			"message": "Failed to insert Data",
+		})
+
 		return
 	}
-	response.Status = 200
-	response.Message = "Insert data successfully"
+
+	c.JSON(200, gin.H{
+		"message": "Inserted data",
+		"data":    user,
+	})
+
 	fmt.Print("Insert data to database\n")
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(response)
 }
 
-func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	var response Model.Response
-
-	db := Config.Connect()
-	defer db.Close()
-
-	err := r.ParseMultipartForm(4096)
-
-	if err != nil {
-		panic(err)
-	}
+func BasicAuth(c *gin.Context) {
 	var user Model.User
-	session, _ := Store.Get(r, "Session")
-	user.Id = session.Values["id"].(string)
-	user.Name = r.FormValue("name")
-	user.Email = r.FormValue("email")
-	user.Password = r.FormValue("password")
-	user.Role = r.FormValue("role")
-
-	err = Repo.UpdateUser(user, db)
-
-	if err != nil {
-		log.Print(err)
-	}
-
-	response.Status = 200
-	response.Message = "Update data successfully"
-	fmt.Print("Update data successfully\n")
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	var response Model.Response
-	db := Config.Connect()
-	defer db.Close()
-
-	err := r.ParseMultipartForm(4096)
-
-	if err != nil {
-		panic(err)
-	}
-
-	id := r.FormValue("id")
-
-	_, err = Repo.DeleteUser(id, db)
-
-	if err != nil {
-		log.Print(err)
-		return
-	}
-
-	response.Status = 200
-	response.Message = "Delete data successfully\n"
-	fmt.Print("Delete data successfully")
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-
-}
-
-func ValidateAccount(name string, password string) Model.UserWithoutPassword {
-	var user Model.User
+	name, password, _ := c.Request.BasicAuth()
 
 	db := Config.Connect()
 	defer db.Close()
@@ -197,115 +119,97 @@ func ValidateAccount(name string, password string) Model.UserWithoutPassword {
 		err = rows.Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.Role)
 
 		if err != nil {
+
 			log.Fatal(err.Error())
+			c.Abort()
 		} else {
+			fmt.Print("Comparing With ", name, " ", password, "  ")
 			fmt.Printf("Checking user: %s, Password: %s\n", user.Name, user.Password)
 			if password == user.Password && name == user.Name {
 				fmt.Println("User found and authenticated!")
-				return user.UserWithoutPassword
+				log.WithFields(log.Fields{
+					"user": user,
+				}).Info("User authenticated")
 			}
 		}
 	}
 
-	fmt.Println("User not found or not authenticated.")
-	return Model.UserWithoutPassword{Id: "-1", Name: "", Email: ""}
+	c.Abort()
+	c.Writer.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
+	return
 
 }
 
-func Login(w http.ResponseWriter, r *http.Request) {
-	user, pass, _ := r.BasicAuth()
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Set-Cookie")
-
-	var response Model.Response
-	// Validate the user's credentials and retrieve the user's role.
-	authenticatedUser := ValidateAccount(user, pass)
-
-	if authenticatedUser.Id == "-1" {
-
-		w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	// Create a session and set the role and authenticated flag.
-	session, _ := Store.Get(r, "Session")
-	session.Values["authenticated"] = true
-	session.Values["role"] = authenticatedUser.Role
-	session.Values["id"] = authenticatedUser.Id
-	session.Save(r, w)
-
-	response.Data = append(response.Data, authenticatedUser)
-	response.Status = 200
-	response.Message = "Success"
-
-	json.NewEncoder(w).Encode(response)
-}
-
-func Signout(w http.ResponseWriter, r *http.Request) {
-	session, _ := Store.Get(r, "Session") // Change "session-name" to your session name
-	session.Values["authenticated"] = false
-	session.Save(r, w)
-
-	// Redirect the user to the login page or any other appropriate page
-	http.Redirect(w, r, "/login", http.StatusFound)
-}
-
-func AddSlot(w http.ResponseWriter, r *http.Request) {
-	var response Model.Response
+func Login(c *gin.Context) {
+	BasicAuth(c)
+	user, _, _ := c.Request.BasicAuth()
 
 	db := Config.Connect()
 	defer db.Close()
 
-	err := r.ParseMultipartForm(4096)
+	authenticatedUser, err := Repo.GetUserbyUserName(user, db)
 
-	if err != nil {
-		panic(err)
+	fmt.Println(authenticatedUser)
+	if err != nil || authenticatedUser.Id == "-1" {
+		c.JSON(409, gin.H{
+			"Message": "Login Failed",
+			"Data":    authenticatedUser.UserWithoutPassword,
+		})
 	}
+	c.JSON(200, gin.H{
+		"Message": "Logged in Successfully",
+		"Data":    authenticatedUser.UserWithoutPassword,
+	})
+}
+
+func AddDoctorSlot(c *gin.Context) {
+	BasicAuth(c)
+	db := Config.Connect()
+	defer db.Close()
 
 	var slot Model.Slot
-	slot.DoctorId = r.FormValue("doctor")
-	slot.Date = r.FormValue("date")
+	c.Bind(&slot)
 
-	_, err = Repo.InsertSlot(slot, db)
+	_, err := Repo.InsertSlot(slot, db)
+	if err != nil {
+		c.JSON(409, gin.H{
+			"Message": "Failed to Insert Data",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"Message": "Insert data successfully",
+	})
+	fmt.Print("Insert data to database\n")
+
+}
+
+func GetDoctorSlots(c *gin.Context) {
+	BasicAuth(c)
+	var slot Model.DisplaySlot
+	var arrSlot []Model.DisplaySlot
+
+	user, _, _ := c.Request.BasicAuth()
+
+	db := Config.Connect()
+	defer db.Close()
+
+	authenticatedUser, err := Repo.GetUserbyUserName(user, db)
+	id := authenticatedUser.Id
 
 	if err != nil {
 		log.Print(err)
-		response.Status = 409
-		response.Message = "idk smth weird happened"
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		json.NewEncoder(w).Encode(response)
-		return
 	}
-	response.Status = 200
-	response.Message = "Insert data successfully"
-	fmt.Print("Insert data to database\n")
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(response)
-}
-
-func GetDoctorSlots(w http.ResponseWriter, r *http.Request) {
-	var slot Model.Slot
-	var response Model.DoctorSlotResponse
-	var arrSlot []Model.Slot
-	session, _ := Store.Get(r, "Session")
-	var id = session.Values["id"]
-
-	db := Config.Connect()
-	defer db.Close()
-
-	rows, err := Repo.GetDoctorSlots(id.(string), db)
+	rows, err := Repo.GetDoctorSlots(id, db)
 
 	if err != nil {
 		log.Print(err)
 	}
 
 	for rows.Next() {
-		err = rows.Scan(&slot.Id, &slot.DoctorId, &slot.Date)
+		err = rows.Scan(&slot.Id, &slot.Date)
 		if err != nil {
 			log.Fatal(err.Error())
 		} else {
@@ -313,63 +217,58 @@ func GetDoctorSlots(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response.Status = 200
-	response.Message = "Success"
-	response.Data = arrSlot
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(response)
+	fmt.Println(arrSlot)
+	c.JSON(200, gin.H{
+		"Message": "Got Data Successfully",
+		"Data":    arrSlot,
+	})
 }
 
-func AddPatientSlot(w http.ResponseWriter, r *http.Request) {
-	var response Model.Response
+func AddPatientSlot(c *gin.Context) {
+	BasicAuth(c)
+	db := Config.Connect()
+	defer db.Close()
+
+	var slot Model.SlotWithPatient
+
+	if err := c.Bind(&slot); err != nil {
+		log.Print(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Message": "Invalid request body",
+		})
+		return
+	}
+
+	fmt.Println(slot)
+
+	if _, err := Repo.InsertPatientSlot(slot, db); err != nil {
+		log.Print(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Failed to insert data",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"Message": "Inserted Data Successfully",
+	})
+}
+
+func GetPatientSlots(c *gin.Context) {
+	var slot Model.GetListPatientResponse
+	var arrSlot []Model.GetListPatientResponse
+	BasicAuth(c)
+	user, _, _ := c.Request.BasicAuth()
 
 	db := Config.Connect()
 	defer db.Close()
 
-	err := r.ParseMultipartForm(4096)
-
-	if err != nil {
-		panic(err)
-	}
-
-	var slot Model.SlotWithPatient
-	session, _ := Store.Get(r, "Session")
-	slot.PatientId = session.Values["id"].(string)
-	slot.SlotId = r.FormValue("slot")
-
-	_, err = Repo.InsertPatientSlot(slot, db)
+	authenticatedUser, err := Repo.GetUserbyUserName(user, db)
 
 	if err != nil {
 		log.Print(err)
-		response.Status = 409
-		response.Message = "idk smth weird happened"
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		json.NewEncoder(w).Encode(response)
-		return
 	}
-	response.Status = 200
-	response.Message = "Insert data successfully"
-	fmt.Print("Insert data to database\n")
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(response)
-
-}
-func GetPatientSlots(w http.ResponseWriter, r *http.Request) {
-	var slot Model.GetListPatientResponse
-	var response Model.PatientNamesSlotResponse
-	var arrSlot []Model.GetListPatientResponse
-
-	session, _ := Store.Get(r, "Session")
-	id := session.Values["id"].(string)
-
-	db := Config.Connect()
-	defer db.Close()
-
+	id := authenticatedUser.Id
 	rows, err := Repo.GetPatientSlots(id, db)
 
 	if err != nil {
@@ -377,39 +276,36 @@ func GetPatientSlots(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for rows.Next() {
-		err = rows.Scan(&slot.DoctorName, &slot.Date)
+		err = rows.Scan(&slot.Id, &slot.DoctorName, &slot.Date)
 		if err != nil {
 			log.Fatal(err.Error())
 		} else {
 			arrSlot = append(arrSlot, slot)
 		}
 	}
-
-	response.Status = 200
-	response.Message = "Success"
-	response.Data = arrSlot
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(response)
+	fmt.Println(arrSlot)
+	c.JSON(200, gin.H{
+		"Message": "Got Data Successfully",
+		"Data":    arrSlot,
+	})
 }
 
-func DeleteSlot(w http.ResponseWriter, r *http.Request) {
-	var response Model.Response
+func DeleteSlot(c *gin.Context) {
+	user, _, _ := c.Request.BasicAuth()
+	BasicAuth(c)
+
 	db := Config.Connect()
 	defer db.Close()
 
-	err := r.ParseMultipartForm(4096)
+	authenticatedUser, err := Repo.GetUserbyUserName(user, db)
 
 	if err != nil {
-		panic(err)
+		log.Print(err)
+		return
 	}
+	id := c.Query("id")
 
-	id := r.FormValue("id")
-
-	session, _ := Store.Get(r, "Session")
-
-	if session.Values["role"] == "patient" {
+	if authenticatedUser.Role == "patient" || authenticatedUser.Role == "admin" {
 		_, err = Repo.DeletePatientSlot(id, db)
 	} else {
 		_, err = Repo.DeleteDoctorSlot(id, db)
@@ -420,29 +316,26 @@ func DeleteSlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.Status = 200
-	response.Message = "Delete data successfully\n"
-	fmt.Print("Delete data successfully")
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	c.JSON(200, gin.H{
+		"Message": "Deleted Data Successfully",
+	})
 }
 
-func EditDoctorSlot(w http.ResponseWriter, r *http.Request) {
-	var response Model.DoctorSlotResponse
+func EditDoctorSlot(c *gin.Context) {
+	BasicAuth(c)
 
 	db := Config.Connect()
 	defer db.Close()
 
-	err := r.ParseMultipartForm(4096)
-
-	if err != nil {
-		panic(err)
-	}
 	var slot Model.Slot
 
-	slot.Id = r.FormValue("id")
-	slot.Date = r.FormValue("date")
+	err := c.Bind(&slot)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	fmt.Println(slot)
 
 	err = Repo.UpdateDoctorSlot(slot, db)
 
@@ -450,30 +343,29 @@ func EditDoctorSlot(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 	}
 
-	response.Status = 200
-	response.Message = "Update data successfully"
+	c.JSON(200, gin.H{
+		"Message": "Update data successfully",
+	})
+
 	fmt.Print("Update data successfully\n")
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
 }
 
-func EditPatientSlot(w http.ResponseWriter, r *http.Request) {
-	var response Model.PatientSlotResponse
+func EditPatientSlot(c *gin.Context) {
+	BasicAuth(c)
 
 	db := Config.Connect()
 	defer db.Close()
 
-	err := r.ParseMultipartForm(4096)
-
-	if err != nil {
-		panic(err)
-	}
 	var slot Model.SlotWithPatient
 
-	session, _ := Store.Get(r, "Session")
-	slot.Id = session.Values["id"].(string)
-	slot.SlotId = r.FormValue("slot")
+	err := c.Bind(&slot)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	fmt.Println(slot)
 
 	err = Repo.UpdatePatientSlot(slot, db)
 
@@ -481,10 +373,9 @@ func EditPatientSlot(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 	}
 
-	response.Status = 200
-	response.Message = "Update data successfully"
-	fmt.Print("Update data successfully\n")
+	c.JSON(200, gin.H{
+		"Message": "Update data successfully",
+	})
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	fmt.Print("Update data successfully\n")
 }

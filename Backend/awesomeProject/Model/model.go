@@ -1,11 +1,10 @@
 package Model
 
 type UserWithoutPassword struct {
-	Id     string `form:"id" json:"id"`
-	Name   string `form:"name" json:"name"`
-	Email  string `form:"email" json:"email"`
-	SlotId int    `form:"slotid" json:"slotid"`
-	Role   string `form:"role" json:"role"`
+	Id    string `form:"id" json:"id"`
+	Name  string `form:"name" json:"name"`
+	Email string `form:"email" json:"email"`
+	Role  string `form:"role" json:"role"`
 }
 
 type User struct {
@@ -25,6 +24,15 @@ type SlotWithPatient struct {
 	SlotId    string `form:"slot" json:"slot"`
 }
 
+type DisplaySlot struct {
+	Id   string `form:"id" json:"id"`
+	Date string `form:"date" json:"date"`
+}
+type DisplaySlotResponse struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Data    []DisplaySlot
+}
 type Response struct {
 	Status  int    `json:"status"`
 	Message string `json:"message"`
@@ -42,6 +50,7 @@ type PatientSlotResponse struct {
 	Data    []SlotWithPatient
 }
 type GetListPatientResponse struct {
+	Id         string `json:"id"`
 	Date       string `json:"date"`
 	DoctorName string `json:"name"`
 }

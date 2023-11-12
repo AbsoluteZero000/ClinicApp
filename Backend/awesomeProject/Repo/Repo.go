@@ -3,6 +3,7 @@ package Repo
 import (
 	"awesomeProject/Model"
 	"database/sql"
+	"fmt"
 )
 
 func InsertUser(user Model.User, db *sql.DB) (sql.Result, error) {
@@ -17,6 +18,18 @@ func DeleteUser(id string, db *sql.DB) (sql.Result, error) {
 	return db.Exec("DELETE FROM User WHERE id=?", id)
 }
 
+func GetUserbyUserName(name string, db *sql.DB) (*Model.User, error) {
+	var user Model.User
+	err := db.QueryRow("select * from user where name =?", name).Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.Role)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
 func UpdateUser(user Model.User, db *sql.DB) error {
 	var err error
 
@@ -47,12 +60,12 @@ func GetSlots(db *sql.DB) (*sql.Rows, error) {
 }
 
 func GetDoctorSlots(id string, db *sql.DB) (*sql.Rows, error) {
-	return db.Query("select * from Slot where doctorid=?", id)
+	return db.Query("select id, date from Slot where doctorid=?", id)
 
 }
 
 func GetPatientSlots(id string, db *sql.DB) (*sql.Rows, error) {
-	return db.Query("select user.name, Slot.date from user INNER JOIN Slot INNER JOIN SlotWithPatient where patientid=?", id)
+	return db.Query("SELECT slotwithpatient.id, user.name, Slot.date  FROM user  JOIN SlotWithPatient ON user.id = SlotWithPatient.patientid  JOIN Slot ON SlotWithPatient.slotid = Slot.id WHERE user.id = ?;", id)
 
 }
 
