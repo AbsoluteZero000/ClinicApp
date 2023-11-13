@@ -82,8 +82,12 @@ func SignUp(c *gin.Context) {
 
 	var user Model.User
 
-	c.Bind(user)
-	_, err := Repo.InsertUser(user, db)
+	err := c.Bind(&user)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	_, err = Repo.InsertUser(user, db)
 
 	if err != nil {
 		log.Print(err)

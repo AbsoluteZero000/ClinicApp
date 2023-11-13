@@ -13,9 +13,9 @@ export interface Slot {
 
 
 @Component({
-  selector: 'app-patient-slot-edit',
-  templateUrl: './patient-slot-edit.component.html',
-  styleUrls: ['./patient-slot-edit.component.scss'],
+  selector: 'app-patient-slot-add',
+  templateUrl: './patient-slot-add.component.html',
+  styleUrls: ['./patient-slot-add.component.scss'],
 })
 export class PatientSlotEditComponent {
   displayedColumns: string[] = ['id', 'Date', 'DoctorName'];

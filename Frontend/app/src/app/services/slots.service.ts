@@ -21,6 +21,15 @@ export class SlotsService {
     return this._http.get('http://localhost:8080/getfreeslots', { headers });
   }
 
+  EditDoctorSlot(id: string, date:string){
+    const authToken =  this.authService.getAuthentication()
+    const headers = new HttpHeaders({
+      Authorization: `Basic ${this.authService.getAuthentication()}`,
+    })
+    console.log({"id":id,"date":date})
+
+    return this._http.put('http://localhost:8080/editdoctorslot', {"id":id,"date":date}, {headers});
+  }
   AddPatientSlot(id: string){
     const authToken =  this.authService.getAuthentication()
     const headers = new HttpHeaders({
@@ -65,8 +74,6 @@ export class SlotsService {
       Authorization: `Basic ${this.authService.getAuthentication()}`,
     });
 
-
-    // Use the DELETE method
     return this._http.delete(`http://localhost:8080/deleteslot?id=${id}`, {headers});
   }
 

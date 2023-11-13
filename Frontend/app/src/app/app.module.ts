@@ -20,7 +20,8 @@ import { DoctorComponent } from './doctor/doctor.component';
 import { PatientComponent } from './patient/patient.component';
 import { MtxDatetimepickerModule } from '@ng-matero/extensions/datetimepicker';
 import {MatSelectModule} from '@angular/material/select';
-import { PatientSlotEditComponent } from './patient-slot-edit/patient-slot-edit.component';
+import { PatientSlotEditComponent } from './patient-slot-add/patient-slot-add.component';
+import { DoctorEditComponent } from './doctor-edit/doctor-edit.component';
 
 
 
@@ -32,6 +33,7 @@ import { PatientSlotEditComponent } from './patient-slot-edit/patient-slot-edit.
     DoctorComponent,
     PatientComponent,
     PatientSlotEditComponent,
+    DoctorEditComponent,
 
 
   ],

@@ -1,0 +1,16 @@
+<div mat-dialog-title>
+    <h1>Edit form</h1>
+</div>
+<form [formGroup]="editForm" style="padding: 0px 25px 5px;" (ngSubmit)="onFormSubmit()">
+    <div mat-dialog-actions class="action">
+        <mat-form-field appearance="fill">
+            <mat-label>Date</mat-label>
+            <input matInput  type="text" placeholder="Date" name="newSlotDate" formControlName="newSlotDate" />
+            <mat-icon matSuffix>sentiment_very_satisfied</mat-icon>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit" >Submit</button>
+
+    </div>
+
+</form>

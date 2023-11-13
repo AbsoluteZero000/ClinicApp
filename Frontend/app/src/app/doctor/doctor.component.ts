@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { SlotsService } from '../services/slots.service';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
+import { DoctorEditComponent } from '../doctor-edit/doctor-edit.component';
 
 export interface Slot {
   id: string;
@@ -23,7 +24,12 @@ export class DoctorComponent implements OnInit {
   ngOnInit(): void {
     this.getSlotList()
   }
+  openDoctorEdit(id: string){
+    this._dialog.open(DoctorEditComponent,  {
+      data: { id },
+    } );
 
+  }
   addSlot(){
     this.slotService.AddDoctorSlot(this.newSlotDate).subscribe({
       next: (res)=>{
@@ -53,7 +59,7 @@ export class DoctorComponent implements OnInit {
   deleteDoctorSlot(id:string){
     this.slotService.DeleteSlots(id).subscribe({
       next: (res)=>{
-        alert("slot deleted ")
+        alert("slot deleted")
         this.getSlotList()
       },
       error: console.log

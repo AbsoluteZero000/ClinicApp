@@ -24,6 +24,7 @@ export class UsersService {
       'password': data.password,
       'role': data.role
     }
+    console.log(body)
     return this._http.post('http://localhost:8080/signup', body);
   }
 

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PatientSlotEditComponent } from './patient-slot-edit.component';
+import { PatientSlotEditComponent } from './patient-slot-add.component';
 
 describe('PatientSlotEditComponent', () => {
   let component: PatientSlotEditComponent;

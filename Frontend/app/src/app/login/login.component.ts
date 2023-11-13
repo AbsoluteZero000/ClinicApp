@@ -24,6 +24,7 @@ export class LoginComponent {
     if(this.loginForm.valid){
       console.log(this.loginForm.value)
       this._userService.Login(this.loginForm.value)
+      // this._dialogRef.close()
     }
   }
 }

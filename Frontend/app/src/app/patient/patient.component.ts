@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { SlotsService } from '../services/slots.service';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
-import { PatientSlotEditComponent } from '../patient-slot-edit/patient-slot-edit.component';
+import { PatientSlotEditComponent } from '../patient-slot-add/patient-slot-add.component';
 import { SharedService } from '../shared.service';
 
 export interface Slot {
@@ -29,6 +29,13 @@ export class PatientComponent {
       this.getSlotList();
     });
 
+  }
+  editPatientSlot(id: string) {
+  this.deletePatientSlot(id);
+    const dialogRef = this._dialog.open(PatientSlotEditComponent);
+    dialogRef.afterClosed().subscribe(() => {
+      this.getSlotList();
+    })
   }
 
   navigateToPatientSlotEdit() {
