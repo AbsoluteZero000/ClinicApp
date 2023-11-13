@@ -3,6 +3,7 @@ import { SlotsService } from '../services/slots.service';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
 import { PatientSlotEditComponent } from '../patient-slot-edit/patient-slot-edit.component';
+import { SharedService } from '../shared.service';
 
 export interface Slot {
   id: string;
@@ -19,11 +20,14 @@ export class PatientComponent {
   displayedColumns: string[] = ['id', 'Date', 'DoctorName', 'action'];
   dataStore!: MatTableDataSource<Slot>;
 
-  constructor(private _dialog:MatDialog, private slotService: SlotsService) {}
+  constructor(private _dialog:MatDialog, private slotService: SlotsService, private sharedService: SharedService) {}
 
   ngOnInit(): void {
     this.getSlotList();
 
+    this.sharedService.dataUpdated$.subscribe(() => {
+      this.getSlotList();
+    });
 
   }
 

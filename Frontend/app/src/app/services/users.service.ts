@@ -18,11 +18,12 @@ export class UsersService {
   ) {}
 
   Signup(data: any): Observable<any> {
-    let body = new FormData();
-    body.append('name', data.name);
-    body.append('email', data.email);
-    body.append('password', data.password);
-    body.append('role', data.role);
+    let body = {
+      'name': data.name,
+      'email': data.email,
+      'password': data.password,
+      'role': data.role
+    }
     return this._http.post('http://localhost:8080/signup', body);
   }
 

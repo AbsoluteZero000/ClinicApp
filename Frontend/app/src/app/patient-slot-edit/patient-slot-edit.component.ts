@@ -3,6 +3,7 @@ import { SlotsService } from '../services/slots.service';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { SharedService } from '../shared.service';
 
 export interface Slot {
   id: string;
@@ -23,7 +24,8 @@ export class PatientSlotEditComponent {
 
   constructor(
     private _formBuilder: FormBuilder,
-    private slotService: SlotsService
+    private slotService: SlotsService,
+    private sharedService :SharedService
     ) {
       this.editForm = this._formBuilder.group({
       slot: '',
@@ -36,6 +38,7 @@ export class PatientSlotEditComponent {
         next: (res) => {
           alert('slot added ');
           this.getSlotList();
+          this.sharedService.triggerDataUpdate();
         },
         error: console.log,
       })
