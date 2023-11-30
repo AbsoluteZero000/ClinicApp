@@ -1,18 +1,20 @@
 package main
 
 import (
+	"awesomeProject/Config"
 	"awesomeProject/Controller"
+	"awesomeProject/Repo"
+	"fmt"
+
 	cors "github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
-	//allowedRoles := map[string][]string{
-	//	"patient": {"/editpatientslot", "/deleteslot", "/getpatientslots", "/addpatientslot", "/updateuser", "/getusers", "/deleteuser"},
-	//	"doctor":  {"/editdoctorslot", "/deleteslot", "/addslot", "/getdoctorslots", "/updateuser", "/getusers", "/deleteuser"},
-	//	"admin":   {"/editpatientslot", "/getpatientslots", "/addpatientslot", "/editdoctorslot", "/deleteslot", "/addslot", "/getdoctorslots", "/updateuser", "/getusers", "/deleteuser"},
-	//}
+
+	db := Config.Connect()
+	fmt.Print(Repo.GetAllUser(db))
 
 	Controller.InitialData()
 

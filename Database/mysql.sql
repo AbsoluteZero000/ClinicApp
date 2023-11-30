@@ -1,5 +1,5 @@
-Drop Database clinicapp;
-CREATE DATABASE clinicapp;
+
+CREATE DATABASE ClinicApp;
 
 USE ClinicApp;
 

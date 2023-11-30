@@ -5,9 +5,10 @@ import (
 	"awesomeProject/Model"
 	"awesomeProject/Repo"
 	"fmt"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 func InitialData() {
@@ -306,13 +307,28 @@ func GetPatientSlots(c *gin.Context) {
 	defer db.Close()
 
 	authenticatedUser, err := Repo.GetUserbyUserName(user, db)
-
+	fmt.Print("lol")
 	if err != nil {
 		log.Print(err)
 	}
 	id := authenticatedUser.Id
 	rows, err := Repo.GetPatientSlots(id, db)
+	if err != nil {
+		log.Print(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Failed to retrieve data",
+		})
+		return
+	}
 
+	if rows == nil {
+		log.Print("Rows is nil")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Message": "Failed to retrieve data",
+		})
+		return
+	}
+	fmt.Print("lol")
 	if err != nil {
 		log.Print(err)
 	}
@@ -325,6 +341,7 @@ func GetPatientSlots(c *gin.Context) {
 			arrSlot = append(arrSlot, slot)
 		}
 	}
+	fmt.Print("lol")
 	fmt.Println(arrSlot)
 	c.JSON(200, gin.H{
 		"Message": "Got Data Successfully",

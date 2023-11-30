@@ -10,7 +10,7 @@ func Connect() *sql.DB {
 	dbPass := "12345678"
 	dbName := "ClinicApp"
 
-	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@/"+dbName)
+	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@tcp(mysql-container:3306)/"+dbName)
 
 	if err != nil {
 		panic(err.Error())
