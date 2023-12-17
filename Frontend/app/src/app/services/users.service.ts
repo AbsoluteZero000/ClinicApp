@@ -25,7 +25,7 @@ export class UsersService {
       'role': data.role
     }
     console.log(body)
-    return this._http.post('http://localhost:8080/signup', body);
+    return this._http.post(this.sharedService.apiURL+'/signup', body);
   }
 
   Login(data: any) {
@@ -36,7 +36,7 @@ export class UsersService {
     console.log(base64Credentials);
 
     this._http
-      .post('http://localhost:8080/login', {}, { headers, observe: 'response' })
+      .post(this.sharedService.apiURL+'/login', {}, { headers, observe: 'response' })
       .subscribe({
         next: (res) => {
           const response = res.body as {

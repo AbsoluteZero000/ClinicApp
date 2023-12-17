@@ -2,13 +2,16 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
 import { Observable } from 'rxjs';
+import { SharedService } from '../shared.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SlotsService {
 
-  constructor(private _http: HttpClient, private authService: AuthService) {}
+  constructor(private _http: HttpClient,
+     private authService: AuthService,
+    private sharedService: SharedService) {}
 
   getFreeSlots() {
     const authToken =  this.authService.getAuthentication();
@@ -18,7 +21,7 @@ export class SlotsService {
 
     });
 
-    return this._http.get('http://localhost:8080/getfreeslots', { headers });
+    return this._http.get(this.sharedService.apiURL+'/getfreeslots', { headers });
   }
 
   EditDoctorSlot(id: string, date:string){
@@ -28,21 +31,21 @@ export class SlotsService {
     })
     console.log({"id":id,"date":date})
 
-    return this._http.put('http://localhost:8080/editdoctorslot', {"id":id,"date":date}, {headers});
+    return this._http.put(this.sharedService.apiURL+'/editdoctorslot', {"id":id,"date":date}, {headers});
   }
   AddPatientSlot(id: string){
     const authToken =  this.authService.getAuthentication()
     const headers = new HttpHeaders({
       Authorization: `Basic ${this.authService.getAuthentication()}`,
     })
-    return this._http.post('http://localhost:8080/addpatientslot', id, {headers});
+    return this._http.post(this.sharedService.apiURL+'/addpatientslot', id, {headers});
   }
   AddDoctorSlot(x: string){
     const authToken =  this.authService.getAuthentication()
     const headers = new HttpHeaders({
       Authorization: `Basic ${this.authService.getAuthentication()}`,
     })
-    return this._http.post('http://localhost:8080/addslot', {"date": x}, {headers});
+    return this._http.post(this.sharedService.apiURL+'/addslot', {"date": x}, {headers});
 
   }
   GetDoctorSlots(){
@@ -53,7 +56,7 @@ export class SlotsService {
 
     });
 
-    return this._http.get('http://localhost:8080/getdoctorslots', { headers });
+    return this._http.get(this.sharedService.apiURL+'/getdoctorslots', { headers });
   }
 
   GetPatientSlots(){
@@ -64,7 +67,7 @@ export class SlotsService {
 
     });
 
-    return this._http.get('http://localhost:8080/getpatientslots', { headers });
+    return this._http.get(this.sharedService.apiURL+'/getpatientslots', { headers });
   }
 
   DeleteSlots(id : string): Observable<any>{

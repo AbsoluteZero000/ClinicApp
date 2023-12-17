@@ -91,7 +91,7 @@ func SignUp(c *gin.Context) {
 	_, err = Repo.InsertUser(user, db)
 
 	if err != nil {
-		log.Print(err)
+		fmt.Print(err)
 		c.JSON(409, gin.H{
 			"message": "Failed to insert Data",
 		})
