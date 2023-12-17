@@ -16,7 +16,7 @@ func Connect() *sql.DB {
 	dbUser := os.Getenv("DB_USER")
 	dbPass := os.Getenv("DB_PASS")
 	dbName := os.Getenv("DB_NAME")
-	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@tcp(database:3306)/"+dbName)
+	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@tcp(mysql:3306)/"+dbName)
 	if err != nil {
 		fmt.Println(err.Error())
 		panic(err.Error())
