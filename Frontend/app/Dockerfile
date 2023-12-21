@@ -6,6 +6,7 @@ COPY package*.json ./
 
 RUN npm i -g @angular/cli@16.2.10
 
+RUN apt-get update && apt-get install -y net-tools
 
 RUN npm i
 
